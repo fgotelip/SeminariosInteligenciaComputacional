@@ -146,3 +146,40 @@ A função de custo final $f(S)$ une os dois critérios em uma única métrica (
 * **Fatores de Normalização (4047 e 152):** Como os valores brutos de $f_{dist}$ (que ficam na casa dos milhares) e $f_{atrib}$ (que ficam na casa das centenas) operam em escalas matemáticas muito diferentes, foi necessário normalizá-los para que um critério não "engolisse" o outro na soma.
     * O valor **4047** é o custo aproximado de uma solução quando o algoritmo foi rodado para otimizar *exclusivamente* a distribuição de carga ($f_{dist}$).
     * O valor **152** é o custo aproximado de uma solução quando otimizada *exclusivamente* para a aptidão ($f_{atrib}$).
+  
+## 3.2.3. Classe Otimizador (Busca Local)
+
+A classe `Otimizador` implementa a busca local propriamente dita.
+
+- **Solução atual vs. melhor solução:** o algoritmo mantém duas instâncias de solução: `sol` (a que está sendo perturbada a cada iteração) e `best` (a melhor encontrada até o momento).
+- **Vizinhança / Movimentos:** a cada iteração, `sol` é modificada alternando dois tipos de movimento:
+  - **`swap`**: escolhe aleatoriamente **um** oferecimento e troca o professor atribuído por outro professor aleatório (dentre os aptos).
+  - **`swap2`**: executa o processo de troca **duas vezes** em sequência (equivalente a aplicar `swap` duas vezes na mesma solução).
+
+  Ou seja, a vizinhança $N(s)$ de uma solução é definida pelas soluções alcançáveis trocando a atribuição de um ou dois oferecimentos por vez.
+
+- **Critério de aceitação:** após o movimento, o custo combinado $f(S)$ (Equação 3) da nova solução é calculado. Se for melhor que `best`, `best` é substituída por `sol`. Caso contrário, `sol` é revertida para `best`, ou seja, é uma busca local gulosa (hill climbing), sem aceitação de soluções piores.
+- **Critério de parada:** limite de até 1 milhão de iterações, ou interrupção manual (os próprios autores relatam essa limitação e sugerem, como melhoria futura, parar automaticamente com base na taxa de melhoria do custo).
+
+*Pontos para relacionar com a disciplina:* dá pra comentar que essa é uma busca local de vizinhança simples (troca única), sem diversificação (não é GRASP, não é SA, não tem perturbação para escapar de ótimos locais) — o que é uma limitação que vocês podem discutir na apresentação.
+
+## 4. Resultados
+
+Principais resultados apresentados:
+
+- **Balanceamento de carga:** usando a planilha anual (dois semestres), a carga horária por professor ficou entre 12 e 16 créditos — uma diferença de apenas 4 créditos entre o professor com menor e maior carga, indicando boa distribuição.
+- **Aptidão:** a maior parte das disciplinas foi alocada a professores com aptidão máxima (nível 5) ou alta (nível 4); nenhuma disciplina foi alocada a um professor com aptidão -1 (desinteresse total).
+- **Convergência:** os gráficos de custo-atribuição e custo-distribuição ao longo das iterações mostram queda acentuada nas primeiras iterações, estabilizando depois (comportamento típico de busca local).
+- **Comparação com a alocação real (1º semestre de 2025):** os autores compararam a distribuição real de carga horária e de aptidão (feita manualmente pela coordenação) com a que o algoritmo geraria para o mesmo conjunto de disciplinas. O resultado do algoritmo mostrou distribuição de carga mais equilibrada e maior concentração em aptidões altas do que a alocação manual.
+- **Validação com o coordenador:** o programa foi apresentado ao coordenador responsável, que validou a abordagem como promissora, mas apontou limitações do modelo atual:
+  - repetir a mesma disciplina para um professor deveria custar menos do que ministrar duas disciplinas diferentes;
+  - cargas horárias iguais deveriam ter pesos diferentes dependendo de quantas disciplinas as compõem (ex.: 8h em 2 disciplinas ≠ 8h em 3 disciplinas);
+  - o critério de parada deveria ser automático (baseado em % de melhoria), não manual.
+- **Limitações reconhecidas pelos autores:** o modelo não trata restrições de grade horária (conflitos de horário, preferências de turno, regra de não dar aula à noite e de manhã seguinte, ocupação de salas) foi deixada para trabalhos futuros.
+
+## 5. Conclusões
+
+O trabalho mostra que uma busca local simples (troca de atribuições, função de custo biobjetivo com soma ponderada) já supera a alocação manual feita atualmente pela coordenação, tanto em equilíbrio de carga quanto em aderência à aptidão dos professores. É um bom caso para a apresentação porque:
+- é uma aplicação real, com dados reais e validação por um "tomador de decisão" (o coordenador);
+- ilustra bem os conceitos de solução inicial construtiva, vizinhança, movimento de busca local e ótimo local;
+- tem limitações claras (não trata restrições de horário/sala), o que dá material para discussão crítica na apresentação.
